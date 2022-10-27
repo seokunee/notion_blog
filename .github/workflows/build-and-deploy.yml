@@ -1,0 +1,57 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          # update the Node version to meet your needs
+          node-version: 16
+          cache: npm
+
+      - name: Generate Environment Variables File for Production
+        shell: bash
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID}}
+        run: |
+          touch .env.local
+          echo NOTION_TOKEN="$NOTION_TOKEN" >> .env.local
+          echo NOTION_DATABASE_ID="$NOTION_DATABASE_ID" >> .env.local
+
+      # - name: Install and Build 🔧
+      #   run: |
+      #     npm ci
+      #     npm run build
+      #     npm run export
+      #     touch out/.nojekyll
+
+      - name: NPM CI
+        run: npm ci
+
+      - name: NPM biuld
+        run: npm run build
+
+      - name: NPM export
+        run: npm run export
+
+      - name: Touch nojekyll
+        run: touch out/.nojekyll
+
+      - name:
+          Deploy 🚀
+          # https://github.com/JamesIves/github-pages-deploy-action
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: out
